@@ -94,15 +94,14 @@ jobs:
         run: |
           APK="apk/${{ steps.apkinfo.outputs.apk_name }}"
 
-          SIZE=$(awk "BEGIN {printf \"%.2fMB\", $(stat -c%s \"$APK\")/1024/1024}")
+          SIZE=$(stat -c%s "$APK" | awk '{printf "%.2fMB", $1/1024/1024}')
           SHA=$(sha256sum "$APK" | awk '{print $1}')
 
           BODY="Automated APK release from upstream.
 
           Size: $SIZE
-          SHA256: $SHA
           Architecture: ${{ steps.apkinfo.outputs.abi }}
-          Signed: ${{ steps.sig.outputs.signed }}
+          SHA256: $SHA
           "
 
           echo "body<<EOF" >> $GITHUB_OUTPUT
