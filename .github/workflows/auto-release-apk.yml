@@ -111,7 +111,7 @@ jobs:
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          tag: v${{ steps.version.outputs.version }}
+          tag: ${{ steps.version.outputs.version }}
           name: ${{ steps.version.outputs.version }}
           body: ${{ steps.meta.outputs.body }}
           artifacts: apk/${{ steps.apkinfo.outputs.apk_name }}
