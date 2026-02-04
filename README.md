@@ -1,6 +1,5 @@
 ![GitHub Release](https://img.shields.io/github/v/release/nightshade-lullaby/aberrant)
 ![GitHub Actions](https://img.shields.io/github/actions/workflow/status/nightshade-lullaby/aberrant/.github/workflows/auto-release-apk.yml)
-![License](https://img.shields.io/github/license/nightshade-lullaby/aberrant)
 
 ## Automated APK Releases
 
