@@ -1,14 +1,16 @@
-# Automated APK Releases
+![GitHub Release](https://img.shields.io/github/v/release/nightshade-lullaby/aberrant)
+![GitHub Actions](https://img.shields.io/github/actions/workflow/status/nightshade-lullaby/aberrant/.github/workflows/auto-release-apk.yml)
+![License](https://img.shields.io/github/license/nightshade-lullaby/aberrant)
 
-![GitHub Release](https://img.shields.io/github/v/release/USERNAME/REPO_NAME)
-![GitHub Actions](https://img.shields.io/github/actions/workflow/status/USERNAME/REPO_NAME/automatic-apk-release.yml)
-![License](https://img.shields.io/github/license/USERNAME/REPO_NAME)
+## Automated APK Releases
 
 Automatically mirrors APK releases from an upstream project using GitHub Actions.
 
 - Fully automated
-- ABI detected automatically
-- No source code, just APK releases
+- Detects ABI
+- No source code, only APK releases
+
+No affiliation with said upstream project or related in any way. 
 
 ---
 
@@ -19,5 +21,7 @@ GitHub Actions를 사용해 오픈소스 프로젝트의 APK 릴리스를 자동
 - 완전 자동화
 - ABI 자동 감지
 - 소스 코드 없음 (APK 릴리스 전용)
+
+비공식 저장소이며, 해당 업스트림 프로젝트와는 어떠한 제휴나 관련도 없습니다.
 
 ---
