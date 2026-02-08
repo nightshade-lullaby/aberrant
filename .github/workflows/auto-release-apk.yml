@@ -23,14 +23,19 @@ jobs:
         run: |
           APK_DIR="generated/bin"
           ZIP=$(ls "upstream/$APK_DIR"/*-apk.zip 2>/dev/null | sort -V | tail -n 1)
+
           if [ -z "$ZIP" ]; then
-            echo "No APK ZIP found, exiting."
+            echo "::notice title=Nothing to do::No new updates detected."
+            echo "found=false" >> $GITHUB_OUTPUT
             exit 0
           fi
+
+          echo "found=true" >> $GITHUB_OUTPUT
           echo "zip=$ZIP" >> $GITHUB_OUTPUT
 
       - name: Extract version from ZIP name
         id: version
+        if: steps.zip.outputs.found == 'true'
         run: |
           FILE=$(basename "${{ steps.zip.outputs.zip }}")
           VERSION=$(echo "$FILE" | grep -oP '^[0-9]+\.[0-9]+\.[0-9]+')
@@ -38,6 +43,7 @@ jobs:
 
       - name: Check if release already exists
         id: check
+        if: steps.zip.outputs.found == 'true'
         run: |
           if gh release view "${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
@@ -48,16 +54,19 @@ jobs:
       - name: Stop if release exists
         if: steps.check.outputs.exists == 'true'
         run: |
-          echo "Release already exists. Skipping."
+          echo "::notice title=Release Exists::Release ${{ steps.version.outputs.version }} already exists. Skipping."
           exit 0
+    
 
       - name: Extract APK from ZIP
+        if: steps.zip.outputs.found == 'true'
         run: |
           mkdir apk
           unzip "${{ steps.zip.outputs.zip }}" -d apk
 
       - name: Analyze APK (ABI detection + rename)
         id: apkinfo
+        if: steps.zip.outputs.found == 'true'
         run: |
           APK=$(ls apk/*.apk | head -n 1)
           VERSION="${{ steps.version.outputs.version }}"
@@ -76,21 +85,9 @@ jobs:
           echo "apk_name=$NEW_NAME" >> $GITHUB_OUTPUT
           echo "abi=$ABI" >> $GITHUB_OUTPUT
 
-      - name: Verify APK signature
-        id: sig
-        run: |
-          APK="apk/${{ steps.apkinfo.outputs.apk_name }}"
-
-          if jarsigner -verify "$APK" >/dev/null 2>&1; then
-            SIGNED="Yes"
-          else
-            SIGNED="No"
-          fi
-
-          echo "signed=$SIGNED" >> $GITHUB_OUTPUT
-
       - name: Generate release metadata
         id: meta
+        if: steps.zip.outputs.found == 'true'
         run: |
           APK="apk/${{ steps.apkinfo.outputs.apk_name }}"
 
@@ -109,6 +106,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
+        if: steps.zip.outputs.found == 'true'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.version.outputs.version }}
