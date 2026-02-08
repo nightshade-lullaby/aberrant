@@ -45,7 +45,8 @@ jobs:
         id: check
         if: steps.zip.outputs.found == 'true'
         run: |
-          if gh release view "${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+          TAG="v${{ steps.version.outputs.version }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
@@ -54,19 +55,18 @@ jobs:
       - name: Stop if release exists
         if: steps.check.outputs.exists == 'true'
         run: |
-          echo "::notice title=Release Exists::Release ${{ steps.version.outputs.version }} already exists. Skipping."
+          echo "::notice title=Release Exists::Release v${{ steps.version.outputs.version }} already exists. Skipping."
           exit 0
-    
 
       - name: Extract APK from ZIP
-        if: steps.zip.outputs.found == 'true'
+        if: steps.check.outputs.exists == 'false'
         run: |
-          mkdir apk
+          mkdir -p apk
           unzip "${{ steps.zip.outputs.zip }}" -d apk
 
       - name: Analyze APK (ABI detection + rename)
         id: apkinfo
-        if: steps.zip.outputs.found == 'true'
+        if: steps.check.outputs.exists == 'false'
         run: |
           APK=$(ls apk/*.apk | head -n 1)
           VERSION="${{ steps.version.outputs.version }}"
@@ -76,7 +76,7 @@ jobs:
           if [ -z "$ARCHS" ]; then
             ABI="universal"
           else
-            ABI=$(echo "$ARCHS" | tr '\n' '+' | sed 's/+$//')
+            ABI=$(echo "$ARCHS" | tr '\n' '+' | sed 's/+$/ /' | tr -d ' ')
           fi
 
           NEW_NAME="app-${VERSION}-${ABI}.apk"
@@ -87,16 +87,17 @@ jobs:
 
       - name: Generate release metadata
         id: meta
-        if: steps.zip.outputs.found == 'true'
+        if: steps.check.outputs.exists == 'false'
         run: |
           APK="apk/${{ steps.apkinfo.outputs.apk_name }}"
 
-          SIZE=$(stat -c%s "$APK" | awk '{printf "%.2fMB", $1/1024/1024}')
+          SIZE_BYTES=$(stat -c%s "$APK")
+          SIZE_MB=$(awk "BEGIN {printf \"%.2fMB\", $SIZE_BYTES/1024/1024}")
           SHA=$(sha256sum "$APK" | awk '{print $1}')
 
           BODY="Automated APK release from upstream.
 
-          Size: $SIZE
+          Size: $SIZE_MB
           Architecture: ${{ steps.apkinfo.outputs.abi }}
           SHA256: $SHA
           "
@@ -106,11 +107,10 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        if: steps.zip.outputs.found == 'true'
+        if: steps.check.outputs.exists == 'false'
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ steps.version.outputs.version }}
-          name: ${{ steps.version.outputs.version }}
+          tag: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
           body: ${{ steps.meta.outputs.body }}
           artifacts: apk/${{ steps.apkinfo.outputs.apk_name }}
-          
