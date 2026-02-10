@@ -45,7 +45,7 @@ jobs:
         id: check
         if: steps.zip.outputs.found == 'true'
         run: |
-          TAG="v${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.version }}"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
@@ -55,7 +55,7 @@ jobs:
       - name: Stop if release exists
         if: steps.check.outputs.exists == 'true'
         run: |
-          echo "::notice title=Release Exists::Release v${{ steps.version.outputs.version }} already exists. Skipping."
+          echo "::notice title=Release Exists::Release ${{ steps.version.outputs.version }} already exists. Skipping."
           exit 0
 
       - name: Extract APK from ZIP
@@ -110,7 +110,7 @@ jobs:
         if: steps.check.outputs.exists == 'false'
         uses: ncipollo/release-action@v1
         with:
-          tag: v${{ steps.version.outputs.version }}
-          name: v${{ steps.version.outputs.version }}
+          tag: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
           body: ${{ steps.meta.outputs.body }}
           artifacts: apk/${{ steps.apkinfo.outputs.apk_name }}
